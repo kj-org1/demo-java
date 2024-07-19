@@ -1,0 +1,51 @@
+on: 
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+permissions: write-all
+name: Scan_Code
+jobs:
+  CodeQL:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'java' ]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: security-and-quality
+        build-mode: none
+        debug: true         
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+  dependency-submission:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'adopt'
+        cache: gradle
+    - name: Validate Gradle wrapper
+      uses: gradle/actions/wrapper-validation@v3
+    
+    - name: Generate and submit dependency graph
+      uses: gradle/actions/dependency-submission@v3
